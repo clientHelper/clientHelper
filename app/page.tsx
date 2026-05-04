@@ -1,56 +1,56 @@
-"use client"
+"use client";
 
-import { useMemo, useState } from "react"
+import { useMemo, useState } from "react";
 
-import Grainient from "@/components/Grainient"
-import Image from "next/image"
+import Grainient from "@/components/Grainient";
+import Image from "next/image";
 
-type Locale = "en" | "bg"
-type Direction = "left" | "right"
+type Locale = "en" | "bg";
+type Direction = "left" | "right";
 
 type QuestionOption = {
-  value: string
-  label: string
-  theme: string
-}
+  value: string;
+  label: string;
+  theme: string;
+};
 
 type Question = {
-  name: string
-  title: string
-  subtitle: string
-  options: [QuestionOption, QuestionOption, QuestionOption]
-}
+  name: string;
+  title: string;
+  subtitle: string;
+  options: [QuestionOption, QuestionOption, QuestionOption];
+};
 
 type CopySet = {
   ui: {
-    brand: string
-    languageLabel: string
-    languageTitle: string
-    languageEnglish: string
-    languageBulgarian: string
-    progressLabel: string
-    progressLanguage: string
-    progressQuestion: (index: number, total: number) => string
-    progressDetails: string
-    back: string
-    detailsTitle: string
-    detailsSubtitle: string
-    fieldBrand: string
-    fieldContact: string
-    fieldEmail: string
-    fieldLink: string
-    fieldNotes: string
-    notesPlaceholder: string
-    submit: string
-    sending: string
-    sent: string
-    recipientMissing: string
-    detailsMissing: string
-    fallback: string
-    statusReady: string
-  }
-  questions: Question[]
-}
+    brand: string;
+    languageLabel: string;
+    languageTitle: string;
+    languageEnglish: string;
+    languageBulgarian: string;
+    progressLabel: string;
+    progressLanguage: string;
+    progressQuestion: (index: number, total: number) => string;
+    progressDetails: string;
+    back: string;
+    detailsTitle: string;
+    detailsSubtitle: string;
+    fieldBrand: string;
+    fieldContact: string;
+    fieldEmail: string;
+    fieldLink: string;
+    fieldNotes: string;
+    notesPlaceholder: string;
+    submit: string;
+    sending: string;
+    sent: string;
+    recipientMissing: string;
+    detailsMissing: string;
+    fallback: string;
+    statusReady: string;
+  };
+  questions: Question[];
+};
 
 const copy: Record<Locale, CopySet> = {
   en: {
@@ -467,114 +467,114 @@ const copy: Record<Locale, CopySet> = {
       },
     ],
   },
-}
+};
 
 const getDirectionForOption = (index: number): Direction =>
-  index === 0 ? "left" : "right"
+  index === 0 ? "left" : "right";
 
 const wait = (ms: number) =>
-  new Promise((resolve) => window.setTimeout(resolve, ms))
+  new Promise((resolve) => window.setTimeout(resolve, ms));
 
 export default function Page() {
-  const [locale, setLocale] = useState<Locale>("en")
-  const [languageSelected, setLanguageSelected] = useState(false)
-  const [step, setStep] = useState(0)
+  const [locale, setLocale] = useState<Locale>("en");
+  const [languageSelected, setLanguageSelected] = useState(false);
+  const [step, setStep] = useState(0);
   const [cardState, setCardState] = useState<
     "idle" | "exit-left" | "exit-right" | "enter-left" | "enter-right"
-  >("idle")
-  const [answers, setAnswers] = useState<Record<string, string>>({})
+  >("idle");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [formValues, setFormValues] = useState({
     brand_name: "",
     contact_name: "",
     contact_email: "",
     brand_link: "",
     extra_notes: "",
-  })
-  const [formStatus, setFormStatus] = useState("")
-  const [isSending, setIsSending] = useState(false)
+  });
+  const [formStatus, setFormStatus] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
-  const activeCopy = copy[locale]
-  const questions = activeCopy.questions
-  const detailsStep = questions.length + 1
+  const activeCopy = copy[locale];
+  const questions = activeCopy.questions;
+  const detailsStep = questions.length + 1;
 
   const progressText = useMemo(() => {
     if (!languageSelected) {
-      return activeCopy.ui.progressLanguage
+      return activeCopy.ui.progressLanguage;
     }
 
     if (step <= questions.length) {
-      return activeCopy.ui.progressQuestion(step, questions.length)
+      return activeCopy.ui.progressQuestion(step, questions.length);
     }
 
-    return activeCopy.ui.progressDetails
-  }, [activeCopy.ui, languageSelected, questions.length, step])
+    return activeCopy.ui.progressDetails;
+  }, [activeCopy.ui, languageSelected, questions.length, step]);
 
   const animateTo = async (direction: Direction, next: () => void) => {
-    setCardState(direction === "left" ? "exit-left" : "exit-right")
-    await wait(360)
-    next()
-    setCardState(direction === "left" ? "enter-right" : "enter-left")
-    await wait(360)
-    setCardState("idle")
-  }
+    setCardState(direction === "left" ? "exit-left" : "exit-right");
+    await wait(360);
+    next();
+    setCardState(direction === "left" ? "enter-right" : "enter-left");
+    await wait(360);
+    setCardState("idle");
+  };
 
   const resetFlow = (nextLocale: Locale) => {
-    setLocale(nextLocale)
-    setLanguageSelected(true)
-    setAnswers({})
+    setLocale(nextLocale);
+    setLanguageSelected(true);
+    setAnswers({});
     setFormValues({
       brand_name: "",
       contact_name: "",
       contact_email: "",
       brand_link: "",
       extra_notes: "",
-    })
-    setFormStatus("")
-    setStep(1)
-  }
+    });
+    setFormStatus("");
+    setStep(1);
+  };
 
   const handleLanguageChoice = async (
     nextLocale: Locale,
     direction: Direction
   ) => {
-    await animateTo(direction, () => resetFlow(nextLocale))
-  }
+    await animateTo(direction, () => resetFlow(nextLocale));
+  };
 
   const handleOptionChoice = async (
     questionName: string,
     value: string,
     direction: Direction
   ) => {
-    setAnswers((current) => ({ ...current, [questionName]: value }))
-    setFormStatus("")
+    setAnswers((current) => ({ ...current, [questionName]: value }));
+    setFormStatus("");
     await animateTo(direction, () => {
-      setStep((current) => Math.min(current + 1, detailsStep))
-    })
-  }
+      setStep((current) => Math.min(current + 1, detailsStep));
+    });
+  };
 
   const handleBack = () => {
     if (!languageSelected && step === 0) {
-      return
+      return;
     }
 
     if (step <= 1) {
-      setLanguageSelected(false)
-      setStep(0)
-      setFormStatus("")
-      return
+      setLanguageSelected(false);
+      setStep(0);
+      setFormStatus("");
+      return;
     }
 
-    setStep((current) => Math.max(1, current - 1))
-    setFormStatus("")
-  }
+    setStep((current) => Math.max(1, current - 1));
+    setFormStatus("");
+  };
 
   const buildSummary = () => {
     const questionSummary = questions
       .map((question) => {
-        const selected = answers[question.name] || "-"
-        return `${question.title}: ${selected}`
+        const selected = answers[question.name] || "-";
+        return `${question.title}: ${selected}`;
       })
-      .join("\n")
+      .join("\n");
 
     return [
       `Language: ${locale === "bg" ? "Bulgarian" : "English"}`,
@@ -586,45 +586,45 @@ export default function Page() {
       questionSummary,
       "",
       `Additional Notes: ${formValues.extra_notes || "-"}`,
-    ].join("\n")
-  }
+    ].join("\n");
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const formElement = event.currentTarget
+    const formElement = event.currentTarget;
     if (!formElement.reportValidity()) {
-      setFormStatus(activeCopy.ui.detailsMissing)
-      return
+      setFormStatus(activeCopy.ui.detailsMissing);
+      return;
     }
 
-    const recipient = formElement.dataset.recipient?.trim()
+    const recipient = formElement.dataset.recipient?.trim();
     if (!recipient || recipient === "hello@yourstudio.com") {
-      setFormStatus(activeCopy.ui.recipientMissing)
-      return
+      setFormStatus(activeCopy.ui.recipientMissing);
+      return;
     }
 
-    setIsSending(true)
-    setFormStatus(activeCopy.ui.sending)
+    setIsSending(true);
+    setFormStatus(activeCopy.ui.sending);
 
-    const summary = buildSummary()
-    const formData = new FormData()
+    const summary = buildSummary();
+    const formData = new FormData();
     formData.set(
       "_subject",
       `${formValues.brand_name || "New"} Website Style Questionnaire`
-    )
-    formData.set("_captcha", "false")
-    formData.set("language_choice", locale === "bg" ? "Bulgarian" : "English")
-    formData.set("brand_name", formValues.brand_name)
-    formData.set("contact_name", formValues.contact_name)
-    formData.set("contact_email", formValues.contact_email)
-    formData.set("brand_link", formValues.brand_link)
-    formData.set("extra_notes", formValues.extra_notes)
-    formData.set("project_summary", summary)
+    );
+    formData.set("_captcha", "false");
+    formData.set("language_choice", locale === "bg" ? "Bulgarian" : "English");
+    formData.set("brand_name", formValues.brand_name);
+    formData.set("contact_name", formValues.contact_name);
+    formData.set("contact_email", formValues.contact_email);
+    formData.set("brand_link", formValues.brand_link);
+    formData.set("extra_notes", formValues.extra_notes);
+    formData.set("project_summary", summary);
 
     questions.forEach((question) => {
-      formData.set(question.name, answers[question.name] || "")
-    })
+      formData.set(question.name, answers[question.name] || "");
+    });
 
     try {
       const response = await fetch(
@@ -636,30 +636,30 @@ export default function Page() {
           },
           body: formData,
         }
-      )
+      );
 
       if (!response.ok) {
-        throw new Error("Email service request failed.")
+        throw new Error("Email service request failed.");
       }
 
-      setFormStatus(activeCopy.ui.sent)
+      setFormStatus(activeCopy.ui.sent);
     } catch {
-      const body = encodeURIComponent(summary)
+      const body = encodeURIComponent(summary);
       const subject = encodeURIComponent(
         `${formValues.brand_name || "New"} Website Style Questionnaire`
-      )
-      window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${subject}&body=${body}`
-      setFormStatus(activeCopy.ui.fallback)
+      );
+      window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${subject}&body=${body}`;
+      setFormStatus(activeCopy.ui.fallback);
     } finally {
-      setIsSending(false)
+      setIsSending(false);
     }
-  }
+  };
 
   const cardClassName =
-    cardState === "idle" ? "deck-card" : `deck-card deck-card--${cardState}`
+    cardState === "idle" ? "deck-card" : `deck-card deck-card--${cardState}`;
 
   const currentQuestion =
-    step > 0 && step <= questions.length ? questions[step - 1] : null
+    step > 0 && step <= questions.length ? questions[step - 1] : null;
 
   return (
     <div className="questionnaire-page">
@@ -879,5 +879,5 @@ export default function Page() {
         </form>
       </main>
     </div>
-  )
+  );
 }
