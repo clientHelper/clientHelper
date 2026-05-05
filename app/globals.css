@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -6,7 +7,7 @@
 
 @theme inline {
   --font-sans: var(--font-sans);
-  --font-heading: var(--font-heading);
+  --font-heading: var(--font-sans);
 }
 
 :root {
@@ -16,6 +17,7 @@
   --muted-foreground: rgba(54, 43, 36, 0.68);
   --border: rgba(255, 255, 255, 0.24);
   --ring: rgba(255, 255, 255, 0.4);
+  --font-heading: "Unbounded", sans-serif;
 }
 
 @layer base {
@@ -31,7 +33,7 @@
   body {
     margin: 0;
     overflow: hidden;
-    font-family: var(--font-sans), sans-serif;
+    font-family: var(--font-heading), sans-serif;
     background: var(--background);
     color: var(--foreground);
   }
