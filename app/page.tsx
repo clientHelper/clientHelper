@@ -57,7 +57,7 @@ const copy: Record<Locale, CopySet> = {
     ui: {
       brand: "Your Logo",
       languageLabel: "Language",
-      languageTitle: "Choose your languagee",
+      languageTitle: "Choose your language",
       languageEnglish: "English",
       languageBulgarian: "Bulgarian",
       progressLabel: "Step",
