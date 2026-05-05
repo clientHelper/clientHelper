@@ -598,58 +598,35 @@ export default function Page() {
       return;
     }
 
-    const recipient = formElement.dataset.recipient?.trim();
-    if (!recipient || recipient === "hello@yourstudio.com") {
-      setFormStatus(activeCopy.ui.recipientMissing);
-      return;
-    }
-
     setIsSending(true);
     setFormStatus(activeCopy.ui.sending);
 
-    const summary = buildSummary();
-    const formData = new FormData();
-    formData.set(
-      "_subject",
-      `${formValues.brand_name || "New"} Website Style Questionnaire`
-    );
-    formData.set("_captcha", "false");
-    formData.set("language_choice", locale === "bg" ? "Bulgarian" : "English");
-    formData.set("brand_name", formValues.brand_name);
-    formData.set("contact_name", formValues.contact_name);
-    formData.set("contact_email", formValues.contact_email);
-    formData.set("brand_link", formValues.brand_link);
-    formData.set("extra_notes", formValues.extra_notes);
-    formData.set("project_summary", summary);
-
-    questions.forEach((question) => {
-      formData.set(question.name, answers[question.name] || "");
-    });
-
     try {
-      const response = await fetch(
-        `https://formsubmit.co/ajax/${encodeURIComponent(recipient)}`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-          },
-          body: formData,
-        }
-      );
+      const response = await fetch("/api/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          brand_name: formValues.brand_name,
+          contact_name: formValues.contact_name,
+          contact_email: formValues.contact_email,
+          brand_link: formValues.brand_link,
+          extra_notes: formValues.extra_notes,
+          answers,
+          summary: buildSummary(),
+          locale,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error("Email service request failed.");
+        throw new Error("Failed to send");
       }
 
       setFormStatus(activeCopy.ui.sent);
-    } catch {
-      const body = encodeURIComponent(summary);
-      const subject = encodeURIComponent(
-        `${formValues.brand_name || "New"} Website Style Questionnaire`
-      );
-      window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${subject}&body=${body}`;
-      setFormStatus(activeCopy.ui.fallback);
+    } catch (error) {
+      console.error(error);
+      setFormStatus("Something went wrong. Try again.");
     } finally {
       setIsSending(false);
     }
@@ -703,7 +680,7 @@ export default function Page() {
               <div className="deck-card__brand">
                 <div className="deck-card__logo">
                   <Image
-                    src="/logo.png"
+                    src="/g6.svg"
                     alt="Logo"
                     width={60}
                     height={60}
