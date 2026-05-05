@@ -717,14 +717,15 @@ export default function Page() {
                 </div>
               </div>
 
-              <button
-                className="deck-card__back"
-                disabled={!languageSelected && step === 0}
-                type="button"
-                onClick={handleBack}
-              >
-                {activeCopy.ui.back}
-              </button>
+              {(languageSelected || step > 0) && (
+                <button
+                  className="deck-card__back"
+                  type="button"
+                  onClick={handleBack}
+                >
+                  {activeCopy.ui.back}
+                </button>
+              )}
             </div>
 
             {!languageSelected ? (
