@@ -6,8 +6,7 @@ import Grainient from "@/components/Grainient";
 import Image from "next/image";
 
 type Locale = "en" | "bg";
-type Direction = "left" | "right";
-
+type Direction = "left" | "up" | "right";
 type QuestionOption = {
   value: string;
   label: string;
@@ -468,9 +467,11 @@ const copy: Record<Locale, CopySet> = {
     ],
   },
 };
-
-const getDirectionForOption = (index: number): Direction =>
-  index === 0 ? "left" : "right";
+const getDirectionForOption = (index: number): Direction => {
+  if (index === 0) return "left";
+  if (index === 1) return "up";
+  return "right";
+};
 
 const wait = (ms: number) =>
   new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -480,7 +481,13 @@ export default function Page() {
   const [languageSelected, setLanguageSelected] = useState(false);
   const [step, setStep] = useState(0);
   const [cardState, setCardState] = useState<
-    "idle" | "exit-left" | "exit-right" | "enter-left" | "enter-right"
+    | "idle"
+    | "exit-left"
+    | "exit-up"
+    | "exit-right"
+    | "enter-left"
+    | "enter-up"
+    | "enter-right"
   >("idle");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [formValues, setFormValues] = useState({
@@ -489,7 +496,10 @@ export default function Page() {
     contact_email: "",
     brand_link: "",
     extra_notes: "",
+    website: "",
   });
+
+  const [isAnimating, setIsAnimating] = useState(false);
   const [formStatus, setFormStatus] = useState("");
   const [isSending, setIsSending] = useState(false);
 
@@ -510,12 +520,28 @@ export default function Page() {
   }, [activeCopy.ui, languageSelected, questions.length, step]);
 
   const animateTo = async (direction: Direction, next: () => void) => {
-    setCardState(direction === "left" ? "exit-left" : "exit-right");
+    if (isAnimating) return;
+
+    setIsAnimating(true);
+
+    setCardState(`exit-${direction}` as typeof cardState);
+
     await wait(360);
+
     next();
-    setCardState(direction === "left" ? "enter-right" : "enter-left");
+
+    const enterDirection =
+      direction === "left" ? "right" : direction === "right" ? "left" : "up";
+
+    await new Promise(requestAnimationFrame);
+
+    setCardState(`enter-${enterDirection}` as typeof cardState);
+
     await wait(360);
+
     setCardState("idle");
+
+    setIsAnimating(false);
   };
 
   const resetFlow = (nextLocale: Locale) => {
@@ -591,7 +617,7 @@ export default function Page() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
+    if (isSending) return;
     const formElement = event.currentTarget;
     if (!formElement.reportValidity()) {
       setFormStatus(activeCopy.ui.detailsMissing);
@@ -602,11 +628,18 @@ export default function Page() {
     setFormStatus(activeCopy.ui.sending);
 
     try {
+      const controller = new AbortController();
+
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 10000);
+
       const response = await fetch("/api/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
         body: JSON.stringify({
           brand_name: formValues.brand_name,
           contact_name: formValues.contact_name,
@@ -616,17 +649,26 @@ export default function Page() {
           answers,
           summary: buildSummary(),
           locale,
+          website: formValues.website,
         }),
       });
 
+      clearTimeout(timeout);
+
       if (!response.ok) {
-        throw new Error("Failed to send");
+        const errorData = await response.json();
+
+        console.error(errorData);
+
+        throw new Error(errorData.error || "Failed to send");
       }
 
       setFormStatus(activeCopy.ui.sent);
     } catch (error) {
       console.error(error);
-      setFormStatus("Something went wrong. Try again.");
+      setFormStatus(
+        error instanceof Error ? error.message : "Something went wrong."
+      );
     } finally {
       setIsSending(false);
     }
@@ -741,6 +783,7 @@ export default function Page() {
                       key={`${currentQuestion.name}-${option.value}`}
                       className={`option-card ${option.theme}`}
                       type="button"
+                      disabled={isAnimating}
                       onClick={() =>
                         handleOptionChoice(
                           currentQuestion.name,
@@ -766,6 +809,21 @@ export default function Page() {
                 </div>
 
                 <div className="details-grid">
+                  <input
+                    type="text"
+                    name="website"
+                    autoComplete="off"
+                    tabIndex={-1}
+                    className="hidden"
+                    value={formValues.website}
+                    onChange={(event) =>
+                      setFormValues((current) => ({
+                        ...current,
+                        website: event.target.value,
+                      }))
+                    }
+                  />
+
                   <label className="field">
                     <span>{activeCopy.ui.fieldBrand}</span>
                     <input
@@ -843,12 +901,13 @@ export default function Page() {
 
                 <div className="details-actions">
                   <p>{formStatus || activeCopy.ui.statusReady}</p>
+
                   <button
                     className="pill-button pill-button--submit"
-                    disabled={isSending}
+                    disabled={isSending || isAnimating}
                     type="submit"
                   >
-                    {activeCopy.ui.submit}
+                    {isSending ? activeCopy.ui.sending : activeCopy.ui.submit}
                   </button>
                 </div>
               </div>

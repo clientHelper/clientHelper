@@ -8,7 +8,7 @@ import { Unbounded } from "next/font/google";
 
 const unbounded = Unbounded({
   subsets: ["latin"],
-  variable: "--font-sans", // 👈 make it your main font
+  variable: "--font-sans",
 });
 
 const sans = Plus_Jakarta_Sans({
