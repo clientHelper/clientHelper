@@ -47,6 +47,9 @@ type CopySet = {
     detailsMissing: string;
     fallback: string;
     statusReady: string;
+    successTitle: string;
+    successMessage: string;
+    successButton: string;
   };
   questions: Question[];
 };
@@ -81,6 +84,10 @@ const copy: Record<Locale, CopySet> = {
       detailsMissing: "Complete the final details before sending.",
       fallback: "Automatic sending was blocked, so your email app was opened.",
       statusReady: "Complete the final details and send the brief.",
+      successTitle: "Thank you",
+      successMessage:
+        "Your questionnaire has been sent successfully. We will get back to you soon.",
+      successButton: "Send another request",
     },
     questions: [
       {
@@ -290,6 +297,10 @@ const copy: Record<Locale, CopySet> = {
       fallback:
         "Автоматичното изпращане беше блокирано и отвори имейл приложението.",
       statusReady: "Попълнете финалните данни и изпратете брифа.",
+      successTitle: "Благодарим ви",
+      successMessage:
+        "Вашият въпросник беше изпратен успешно. Ще се свържем с вас скоро.",
+      successButton: "Изпрати ново запитване",
     },
     questions: [
       {
@@ -489,6 +500,9 @@ export default function Page() {
     | "enter-up"
     | "enter-right"
   >("idle");
+  const [submitState, setSubmitState] = useState<
+    "idle" | "success" | "rate-limited" | "error"
+  >("idle");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [formValues, setFormValues] = useState({
     brand_name: "",
@@ -624,7 +638,6 @@ export default function Page() {
       setFormStatus(activeCopy.ui.detailsMissing);
       return;
     }
-
     setIsSending(true);
     setFormStatus(activeCopy.ui.sending);
 
@@ -654,22 +667,28 @@ export default function Page() {
         }),
       });
 
+      console.log("STATUS:", response.status);
+      console.log("OK:", response.ok);
+
+      const data = await response.json();
+      console.log("DATA:", data);
+
       clearTimeout(timeout);
 
       if (!response.ok) {
-        const errorData = await response.json();
+        if (response.status === 429) {
+          setSubmitState("rate-limited");
+          return;
+        }
 
-        console.error(errorData);
-
-        throw new Error(errorData.error || "Failed to send");
+        setSubmitState("error");
+        return;
       }
 
-      setFormStatus(activeCopy.ui.sent);
+      setSubmitState("success");
     } catch (error) {
       console.error(error);
-      setFormStatus(
-        error instanceof Error ? error.message : "Something went wrong."
-      );
+      setSubmitState("error");
     } finally {
       setIsSending(false);
     }
@@ -737,7 +756,7 @@ export default function Page() {
                 </div>
               </div>
 
-              {(languageSelected || step > 0) && (
+              {submitState === "idle" && (languageSelected || step > 0) && (
                 <button
                   className="deck-card__back"
                   type="button"
@@ -748,12 +767,76 @@ export default function Page() {
               )}
             </div>
 
-            {!languageSelected ? (
+            {submitState === "success" ? (
+              <div className="success-screen">
+                <div className="success-screen__badge">✓</div>
+
+                <div className="success-screen__content">
+                  <span className="success-screen__eyebrow">
+                    {locale === "bg" ? "Успешно" : "Success"}
+                  </span>
+
+                  <h1>{locale === "bg" ? "Благодарим ви" : "Thank you"}</h1>
+
+                  <p>
+                    {locale === "bg"
+                      ? "Вашият въпросник беше изпратен успешно."
+                      : "Your questionnaire was sent successfully."}
+                  </p>
+                </div>
+              </div>
+            ) : submitState === "rate-limited" ? (
+              <div className="success-screen">
+                <div className="success-screen__badge">!</div>
+
+                <div className="success-screen__content">
+                  <span className="success-screen__eyebrow">
+                    {locale === "bg" ? "Лимит" : "Rate Limited"}
+                  </span>
+
+                  <h1>
+                    {locale === "bg"
+                      ? "Твърде много заявки"
+                      : "Too many requests"}
+                  </h1>
+
+                  <p>
+                    {locale === "bg"
+                      ? "Моля опитайте отново по-късно."
+                      : "Please try again later."}
+                  </p>
+                </div>
+              </div>
+            ) : submitState === "error" ? (
+              <div className="success-screen">
+                <div className="success-screen__badge">×</div>
+
+                <div className="success-screen__content">
+                  <span className="success-screen__eyebrow">
+                    {locale === "bg" ? "Грешка" : "Error"}
+                  </span>
+
+                  <h1>
+                    {locale === "bg"
+                      ? "Нещо се обърка"
+                      : "Something went wrong"}
+                  </h1>
+
+                  <p>
+                    {locale === "bg"
+                      ? "Моля опитайте отново."
+                      : "Please try again."}
+                  </p>
+                </div>
+              </div>
+            ) : !languageSelected ? (
               <div className="language-screen">
                 <span className="language-screen__eyebrow">
                   {activeCopy.ui.languageLabel}
                 </span>
+
                 <h1>{activeCopy.ui.languageTitle}</h1>
+
                 <div className="language-screen__actions">
                   <button
                     className="pill-button pill-button--light"
@@ -762,6 +845,7 @@ export default function Page() {
                   >
                     {activeCopy.ui.languageEnglish}
                   </button>
+
                   <button
                     className="pill-button pill-button--dark"
                     type="button"

@@ -39,10 +39,13 @@ export async function POST(req: Request) {
     const { success } = await ratelimit.limit(ip);
 
     if (!success) {
-      return Response.json({
-        error:
-          "You've reached the submission limit. Please try again tomorrow.",
-      });
+      return Response.json(
+        {
+          error:
+            "You've reached the submission limit. Please try again tomorrow.",
+        },
+        { status: 429 }
+      );
     }
 
     // PARSE BODY
