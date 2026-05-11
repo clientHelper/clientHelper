@@ -554,6 +554,7 @@ export default function Page() {
       contact_email: "",
       brand_link: "",
       extra_notes: "",
+      website: "",
     });
     setFormStatus("");
     setStep(1);
