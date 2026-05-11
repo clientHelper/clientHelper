@@ -6,7 +6,7 @@ import Grainient from "@/components/Grainient";
 import Image from "next/image";
 
 type Locale = "en" | "bg";
-type Direction = "left" | "up" | "right";
+type Direction = "left" | "up" | "right" | "down";
 type QuestionOption = {
   value: string;
   label: string;
@@ -500,9 +500,11 @@ export default function Page() {
     | "exit-left"
     | "exit-up"
     | "exit-right"
+    | "exit-down"
     | "enter-left"
     | "enter-up"
     | "enter-right"
+    | "enter-down"
   >("idle");
   const [submitState, setSubmitState] = useState<
     "idle" | "success" | "rate-limited" | "error"
@@ -549,7 +551,11 @@ export default function Page() {
     next();
 
     const enterDirection =
-      direction === "left" ? "right" : direction === "right" ? "left" : "up";
+      direction === "left"
+        ? "right"
+        : direction === "right"
+          ? "left"
+          : direction;
 
     await new Promise(requestAnimationFrame);
 
@@ -889,6 +895,17 @@ export default function Page() {
                     </button>
                   ))}
                 </div>
+
+                <button
+                  className="option-unsure"
+                  type="button"
+                  disabled={isAnimating}
+                  onClick={() =>
+                    handleOptionChoice(currentQuestion.name, "Not sure", "down")
+                  }
+                >
+                  {locale === "bg" ? "Не съм сигурен" : "I’m not sure"}
+                </button>
               </div>
             ) : (
               <div className="details-screen">
