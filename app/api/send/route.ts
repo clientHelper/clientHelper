@@ -13,7 +13,7 @@ const redis = new Redis({
 
 const ratelimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(3, "1 d"),
+  limiter: Ratelimit.slidingWindow(3, "1 s"),
 });
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -21,7 +21,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const schema = z.object({
   brand_name: z.string().min(1).max(120),
   contact_name: z.string().min(1).max(120),
-  contact_email: z.string().email().max(200),
+  contact_email: z.email().max(200),
   brand_link: z.string().max(300).optional(),
   extra_notes: z.string().max(5000).optional(),
   summary: z.string().max(10000),
